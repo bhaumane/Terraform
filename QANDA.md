@@ -185,3 +185,134 @@ If asked:
 “Use for_each for most real-world scenarios because it provides stable resource addressing. Use count only for simple, fixed, or conditional resource creation.”
 
 ---
+
+## How terraform process the files?
+
+**🔷 Short Answer**
+
+👉 When you run:
+```bash
+terraform apply
+```
+- ✔️ Terraform ONLY processes .tf files in the current working directory
+- ❌ It does NOT automatically scan subdirectories
+- ✔️ It processes other directories ONLY if explicitly referenced (e.g., via modules)
+
+### 🧠 How Terraform Actually Works (Core Concept)
+
+Terraform operates on a concept called a:
+
+**👉 Working Directory**
+
+This directory:
+
+- Contains .tf files
+- Is treated as a single configuration unit
+
+### 📁 1. What Files Are Executed?
+✅ Terraform loads:
+- All *.tf files
+- All *.tf.json files
+
+**👉 ONLY in the current directory**
+
+**🔍 Example**
+```bash
+project/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+└── subdir/
+    └── extra.tf
+```
+
+When you run:
+```bash
+terraform apply
+```
+👉 Terraform will:
+**✅ Load**:
+- main.tf
+- variables.tf
+- outputs.tf
+**❌ IGNORE**:
+- subdir/extra.tf
+
+### 🔷 2. Are Files in Subdirectories Executed?
+**❌ No — not automatically**
+
+**Terraform does NOT recursively scan directories**
+
+👉 This is by design:
+
+- Prevents accidental infrastructure changes
+- Enforces explicit configuration
+
+### 🔷 3. Then How Are Other Directories Used?
+
+Through modules.
+
+### 🧩 4. Modules Are Explicitly Loaded
+
+If you define:
+```bash
+module "ec2" {
+  source = "./modules/ec2"
+}
+```
+👉 Then Terraform will:
+
+- Go into ./modules/ec2
+- Load ALL .tf files inside that module directory
+📁 Example Structure
+```bash
+project/
+├── main.tf
+└── modules/
+    └── ec2/
+        ├── main.tf
+        ├── variables.tf
+        └── outputs.tf
+
+```
+**🔍 What Happens?**
+
+When terraform apply runs:
+
+Step-by-step:
+- Load current directory .tf files
+- See module "ec2" block
+- Go to ./modules/ec2
+- Load ALL .tf files inside that module
+- Merge into execution graph
+
+### 🔷 5. Are All Module Files Executed?
+✅ Yes — but only if module is referenced
+
+👉 Inside a module:
+
+- All .tf files are treated as one configuration
+
+### 🔷 6. What About Multiple Environments?
+📁 Example:
+```bash
+environments/
+├── dev/
+│   └── main.tf
+├── prod/
+│   └── main.tf
+```
+
+**❗ Important Rule**:
+
+If you run:
+```bash
+cd environments/dev
+terraform apply
+```
+👉 Terraform will:
+
+- ✅ Process only dev/
+- ❌ Ignore prod/
+
+---
