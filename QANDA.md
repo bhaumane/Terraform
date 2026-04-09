@@ -235,6 +235,7 @@ terraform apply
 - main.tf
 - variables.tf
 - outputs.tf
+
 **❌ IGNORE**:
 - subdir/extra.tf
 
@@ -264,6 +265,7 @@ module "ec2" {
 
 - Go into ./modules/ec2
 - Load ALL .tf files inside that module directory
+
 📁 Example Structure
 ```bash
 project/
