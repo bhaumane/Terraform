@@ -231,6 +231,7 @@ When you run:
 terraform apply
 ```
 👉 Terraform will:
+
 **✅ Load**:
 - main.tf
 - variables.tf
