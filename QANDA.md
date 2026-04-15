@@ -456,6 +456,12 @@ instance_type = "t2.large"
 ```
 ---
 
+### What is provider.tf and variable.tf?
+
+*provider.tf* is used to configure the cloud provider like AWS or Azure, while *variables.tf* is used to define input variables that make the Terraform code reusable and flexible.
+
+---
+
 ### 3. What happens if state file is deleted?
 
 If the Terraform state file is deleted, Terraform loses track of existing infrastructure. On the next run, it may try to recreate resources, leading to duplication or errors. Recovery depends on backups or re-importing resources into a new state.
@@ -935,7 +941,151 @@ module "ec2" {
 
 ---
 
+### A terraform apply partially failed and resources are in inconsistent state. How do you recover safely?
 
+If ***terraform apply*** partially fails, I first run ***terraform plan*** to understand the current state, then fix the issue, and re-run apply. If needed, I use state commands or import to correct inconsistencies, ensuring no duplicate or broken resources.
 
+**🪜 Safe Recovery Steps (Step-by-Step)**
 
+**🔍 1. Check Current State**
 
+Run:
+```bash
+terraform plan
+```
+**👉 This shows:**
+
+- What Terraform thinks exists
+- What it wants to change
+
+**🔧 2. Identify Root Cause**
+
+Common reasons:
+- Wrong config
+- Permission issue
+- Dependency failure
+- Network/API issue
+
+👉 Fix the issue first
+
+**🔄 3. Re-run Apply**
+```bash
+terraform apply
+```
+👉 Terraform will:
+
+- Skip already created resources
+- Create missing ones
+
+**⚠️ 4. If State is Out of Sync**
+
+Sometimes:
+
+- Resource exists in cloud
+- But not in state ❌
+
+Fix using import:
+```bash
+terraform import <resource> <id>
+```
+
+**🧹 5. If Resource is Broken**
+
+- Option A: Delete manually (carefully)
+- Option B: Use:
+```bash
+terraform taint <resource>
+```
+
+👉 Forces recreation
+
+**🔄 6. Refresh State (if needed)**
+```bash
+terraform refresh
+```
+
+👉 Syncs state with real infra
+
+**🔍 7. Check for Drift**
+
+Run:
+```bash
+terraform plan
+```
+👉 Ensure everything is consistent
+
+---
+
+### Where do you store the terraform state file?
+
+In production, I store the Terraform state file in a remote backend like AWS S3 with DynamoDB for locking, instead of keeping it locally.
+
+By default, Terraform stores state in:
+```bash
+terraform.tfstate
+```
+👉 Stored on your local machine
+
+**🔥 Best Practice**
+
+**✅ Remote Backend**
+
+We store state in a central location like:
+
+- AWS S3 (most common)
+- Azure Storage
+- Google Cloud Storage
+
+**🏆 Most Common Setup (Industry Standard)**
+
+👉 S3 + DynamoDB
+
+---
+
+### Suppose while executing terraform plan it shows that some resources are being deleted. What will be your next plan of action?
+
+If terraform plan shows resources being deleted, I first analyze why Terraform wants to delete them, verify if the change is intentional, and only proceed after confirming. If not expected, I stop and fix the configuration or state.
+
+**🛠️ 1. Fix the Issue**
+
+Depending on cause:
+
+**If code mistake:**
+
+👉 Restore resource in code
+
+**If state issue:**
+
+👉 Fix using:
+```bash
+terraform state list
+```
+
+**If drift:**
+
+👉 Sync using:
+```bash
+terraform refresh
+```
+
+**🔒 2. Protect Critical Resources**
+
+Use lifecycle rule:
+```bash
+lifecycle {
+  prevent_destroy = true
+}
+```
+👉 Prevents accidental deletion
+
+**🔄 3. Re-run Plan**
+```bash
+terraform plan
+```
+👉 Ensure no unwanted deletes
+
+**🚀 4. Apply Only After Confirmation**
+```bash
+terraform apply
+```
+---
